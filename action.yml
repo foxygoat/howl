@@ -1,0 +1,7 @@
+name: 'Slack Howler'
+description: 'Send slack message on failed build'
+runs:
+  using: "composite"
+  steps:
+    - run: ${{ github.action_path }}/slack-notify.sh
+      shell: bash
