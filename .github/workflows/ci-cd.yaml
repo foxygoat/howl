@@ -25,7 +25,6 @@ jobs:
       env:
         EMAIL: releases@foxygo.at
         GIT_COMMITTER_NAME: Foxygoat Releases
-    - run: false
 
   howl-on-failure:
     runs-on: ubuntu-latest
