@@ -49,7 +49,7 @@ jobs:
     needs: [ci]
     if: always && github.event_name == 'push' && needs.ci.result == 'failure'
     steps:
-    - uses: foxygoat/howl@1
+    - uses: foxygoat/howl@v1
       env:
         SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
         SLACK_TEXT: <!here|here>
@@ -72,7 +72,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - if: ${{ contains(github.event.branches.*.name, 'master') && (github.event.state == 'failure' || github.event.state == 'error')}}
-      uses: foxygoat/howl@1
+      uses: foxygoat/howl@v1
       env:
         SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
         BUILD_URL: ${{ github.event.target_url }}

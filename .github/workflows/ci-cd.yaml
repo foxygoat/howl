@@ -29,8 +29,7 @@ jobs:
     needs: [ci, release]
     if: always() && github.event_name == 'push' && (needs.ci.result == 'failure' || needs.release.result == 'failure')
     steps:
-    - uses: actions/checkout@v2
-    - run: ./slack-notify.sh
+    - uses: foxygoat/howl@v1
       env:
         SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
         SLACK_TEXT: <!here|here>

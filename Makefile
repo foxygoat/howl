@@ -16,11 +16,14 @@ format:  ## Format shell scripts
 .PHONY: all check format
 
 # --- Release -------------------------------------------------------------------
-NEXTTAG := $(shell { git tag --list --merged HEAD --sort=-v:refname; echo v0.0.0; } | grep -E "^v?[0-9]+.[0-9]+.[0-9]+$$" | head -n1 | awk -F . '{ print $$1 "." $$2 "." $$3 + 1 }')
+NEXT_TAG := $(shell { git tag --list --merged HEAD --sort=-v:refname; echo v0.0.0; } | grep -E "^v?[0-9]+.[0-9]+.[0-9]+$$" | head -n1 | awk -F . '{ print $$1 "." $$2 "." $$3 + 1 }')
+MAJOR_RELEASE := $(firstword $(subst ., ,$(NEXT_TAG)))
 
 release:  ## Tag release
-	git tag --annotate $(NEXTAG)
-	git push origin $(NEXTTAG)
+	git tag --annotate $(NEXT_TAG)
+	git push origin $(NEXT_TAG)
+	git branch -f $(MAJOR_RELEASE)
+	git push origin $(MAJOR_RELEASE)
 
 .PHONY: release
 

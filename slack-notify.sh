@@ -69,7 +69,7 @@ curl -fsSL -d @- "${SLACK_HOOK_URL}" <<EOF
 {
  "icon_url": "${PICTURE_BASE_URL}/icon.png",
  ${CHANNEL}
- "username": "${SLACK_USERNAME:-GitHub}",
+ "username": "${SLACK_USERNAME:-Howl}",
  ${SLACK_TEXT}
  "attachments": [
       {
