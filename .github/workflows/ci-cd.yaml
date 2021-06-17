@@ -17,8 +17,7 @@ jobs:
     - if: ${{ failure() && github.event_name == 'push' }} # only run failed master build
       run: ./slack-notify.sh
       env:
-        SLACK_TOKEN:
-          ${{ secrets.SLACK_TOKEN }}
+        SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
 
   release:
     runs-on: ubuntu-latest

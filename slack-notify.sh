@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -euo pipefail
+trap 'echo failed: line $LINENO: $BASH_COMMAND' ERR
 
 if [[ -z "${SLACK_TOKEN-}" ]]; then
     read -r SLACK_TOKEN
