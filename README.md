@@ -44,11 +44,15 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       run: make
-    - if: ${{ failure() && github.event_name == 'push' }} # only run for failed build on master
-      uses: foxygoat/howl
+  howl-on-failure:
+    runs-on: ubuntu-latest
+    needs: [ci]
+    if: always && github.event_name == 'push' && needs.ci.result == 'failure'
+    steps:
+    - uses: foxygoat/howl@1
       env:
         SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
-        #SLACK_TEXT: <!here|here>   # optional; text or @-mention project owners by slack member ID, e.g. <@U0LAN0Z89>
+        SLACK_TEXT: <!here|here>
         #CHANNEL: D01J5K3RLQJ       # optional; use if different from slack webhook setup, take from channel URL
 ```
 
@@ -68,7 +72,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - if: ${{ contains(github.event.branches.*.name, 'master') && (github.event.state == 'failure' || github.event.state == 'error')}}
-      uses: foxygoat/howl
+      uses: foxygoat/howl@1
       env:
         SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
         BUILD_URL: ${{ github.event.target_url }}
