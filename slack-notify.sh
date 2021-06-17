@@ -11,7 +11,7 @@ SLACK_HOOK_URL="https://hooks.slack.com/services/${SLACK_TOKEN}"
 : "${GITHUB_SERVER_URL:=https://github.com}"
 : "${GITHUB_API_URL:=https://api.github.com}"
 : "${GITHUB_SHA:=$(git rev-parse HEAD)}"
-: "${PICTURE_BASE_URL:=https://github.com/foxgoat/howl/raw/master}"
+: "${PICTURE_BASE_URL:=https://github.com/foxygoat/howl/raw/master}"
 
 if [[ -z "${GITHUB_REPOSITORY-}" ]]; then
     REPO_URL=$(git remote get-url origin)
