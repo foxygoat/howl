@@ -20,7 +20,7 @@ NEXT_TAG := $(shell { git tag --list --merged HEAD --sort=-v:refname; echo v0.0.
 MAJOR_RELEASE := $(firstword $(subst ., ,$(NEXT_TAG)))
 
 release:  ## Tag release
-	git tag --annotate $(NEXT_TAG)
+	git tag --annotate --message "Release $(NEXT_TAG)" $(NEXT_TAG)
 	git push origin $(NEXT_TAG)
 	git branch -f $(MAJOR_RELEASE)
 	git push origin $(MAJOR_RELEASE)
