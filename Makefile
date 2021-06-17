@@ -2,10 +2,13 @@
 
 # --- Global -------------------------------------------------------------------
 
-all: check format  ## check and format
+all: check  ## Lint and check format of shell scripts
 	@if [ -e .git/rebase-merge ]; then git --no-pager log -1 --pretty='%h %s'; fi
 	@echo '$(COLOUR_GREEN)Success$(COLOUR_NORMAL)'
 
+.PHONY: all
+
+# --- Lint  ---------------------------------------------------------------------
 check:  ## Lint and check format of shell scripts
 	shellcheck *.sh
 	shfmt -i 4 -d *.sh
@@ -13,7 +16,7 @@ check:  ## Lint and check format of shell scripts
 format:  ## Format shell scripts
 	shfmt -i 4 -w *.sh
 
-.PHONY: all check format
+.PHONY: check format
 
 # --- Release -------------------------------------------------------------------
 NEXT_TAG := $(shell { git tag --list --merged HEAD --sort=-v:refname; echo v0.0.0; } | grep -E "^v?[0-9]+.[0-9]+.[0-9]+$$" | head -n1 | awk -F . '{ print $$1 "." $$2 "." $$3 + 1 }')
