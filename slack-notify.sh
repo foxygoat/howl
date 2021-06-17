@@ -2,9 +2,11 @@
 
 set -euo pipefail
 trap 'echo failed: line $LINENO: $BASH_COMMAND' ERR
+set -x
 
 if [[ -z "${SLACK_TOKEN-}" ]]; then
-    read -r SLACK_TOKEN
+    echo "SLACK_TOKEN not set"
+    exit 1
 fi
 SLACK_HOOK_URL="https://hooks.slack.com/services/${SLACK_TOKEN}"
 
@@ -64,9 +66,9 @@ fi
 curl -fsSL -d @- "${SLACK_HOOK_URL}" <<EOF
 {
  "icon_url": "${PICTURE_BASE_URL}/icon.png",
- ${CHANNEL:+"\"channel\": \"${CHANNEL}\","}
+ ${CHANNEL:+\"channel\": \"${CHANNEL}\",}
  "username": "${SLACK_USERNAME:-GitHub}",
- ${SLACK_TEXT:+"\"text\": \"${SLACK_TEXT}\","}
+ ${SLACK_TEXT:+\"text\": \"${SLACK_TEXT}\",}
  "attachments": [
       {
           "fallback": "Build failure on ${BRANCH}",
