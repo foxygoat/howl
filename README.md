@@ -52,7 +52,7 @@ jobs:
     - uses: foxygoat/howl@v1
       env:
         SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
-        SLACK_TEXT: <!here|here>
+        SLACK_TEXT: <!here|here>    # optional; text or @-mention project owners by slack member ID, e.g. <@U0LAN0Z89>
         #CHANNEL: D01J5K3RLQJ       # optional; use if different from slack webhook setup, take from channel URL
 ```
 
