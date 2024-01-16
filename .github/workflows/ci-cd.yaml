@@ -25,6 +25,7 @@ jobs:
         env:
           EMAIL: releases@foxygo.at
           GIT_COMMITTER_NAME: Foxygoat Releases
+          GH_TOKEN: ${{ github.token }}
 
   howl-on-failure:
     runs-on: ubuntu-latest
