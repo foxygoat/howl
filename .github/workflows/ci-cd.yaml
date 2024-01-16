@@ -36,4 +36,4 @@ jobs:
       - uses: foxygoat/howl@v1
         env:
           SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
-          SLACK_TEXT: <!here|here>
+          SLACK_TEXT: <!here>

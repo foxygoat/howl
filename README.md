@@ -52,7 +52,7 @@ jobs:
       - uses: foxygoat/howl@v1
         env:
           SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
-          SLACK_TEXT: <!here|here> # optional; text or @-mention project owners by slack member ID, e.g. <@U0LAN0Z89>
+          SLACK_TEXT: <!here> # optional; text or @-mention project owners by slack member ID, e.g. <@U0LAN0Z89>
           #CHANNEL: D01J5K3RLQJ       # optional; use if different from slack webhook setup, take from channel URL
 ```
 
@@ -76,6 +76,6 @@ jobs:
         env:
           SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
           BUILD_URL: ${{ github.event.target_url }}
-          #SLACK_TEXT: <!here|here>   # optional; text or @-mention project owners by slack member ID, e.g. <@U0LAN0Z89>
+          #SLACK_TEXT: <!here>   # optional; text or @-mention project owners by slack member ID, e.g. <@U0LAN0Z89>
           #CHANNEL: D01J5K3RLQJ       # optional; use if different from slack webhook setup, take from channel URL
 ```
