@@ -19,16 +19,28 @@ format:  ## Format shell scripts
 .PHONY: check format
 
 # --- Release -------------------------------------------------------------------
-NEXT_TAG := $(shell { git tag --list --merged HEAD --sort=-v:refname; echo v0.0.0; } | grep -E "^v?[0-9]+.[0-9]+.[0-9]+$$" | head -n1 | awk -F . '{ print $$1 "." $$2 "." $$3 + 1 }')
-MAJOR_RELEASE := $(firstword $(subst ., ,$(NEXT_TAG)))
 
-release:  ## Tag release
-	git tag --annotate --message "Release $(NEXT_TAG)" $(NEXT_TAG)
-	git push origin $(NEXT_TAG)
+release: nexttag ## Tag and create GitHub release
+	git tag $(NEXTTAG)
+	git push origin $(NEXTTAG)
 	git branch -f $(MAJOR_RELEASE)
 	git push origin $(MAJOR_RELEASE)
 
-.PHONY: release
+nexttag:
+	$(eval NEXTTAG := $(shell $(NEXTTAG_CMD)))
+	$(eval MAJOR_RELEASE := $(shell echo $(NEXTTAG) | cut -d. -f1 ))
+
+.PHONY: nexttag release
+
+define NEXTTAG_CMD
+{
+  { git tag --list --merged HEAD --sort=-v:refname; echo v0.0.0; }
+  | grep -E "^v?[0-9]+\.[0-9]+\.[0-9]+$$"
+  | head -n 1
+  | awk -F . '{ print $$1 "." $$2 "." $$3 + 1 }';
+  git diff --name-only @^ | sed -E -n 's|^docs/release-notes/(v[0-9]+\.[0-9]+\.[0-9]+)\.md$$|\1|p';
+} | sort --reverse --version-sort | head -n 1
+endef
 
 # --- Utilities ----------------------------------------------------------------
 COLOUR_NORMAL = $(shell tput sgr0 2>/dev/null)
