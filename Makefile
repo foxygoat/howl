@@ -25,17 +25,21 @@ release: nexttag ## Tag and create GitHub release
 	git push origin $(NEXTTAG)
 	git branch -f $(MAJOR_RELEASE)
 	git push origin $(MAJOR_RELEASE)
-	{ $(if $(RELNOTES),cat $(RELNOTES);) \
-	  echo "## Changelog"; git log --pretty="format:* %h %s" master..$(NEXTTAG); } | \
-	gh release create $(NEXTTAG) --title $(NEXTTAG) --notes-file -
+	{ \
+	  $(if $(RELNOTES),cat $(RELNOTES);) \
+	  echo "## Changelog"; \
+	  git log --pretty="tformat:* %h %s" --no-merges --reverse $(or $(LAST_RELEASE),@^).. ; \
+	} | gh release create $(NEXTTAG) --title $(NEXTTAG) --notes-file -
 
 nexttag:
+	$(eval LAST_RELEASE := $(shell $(LAST_RELEASE_CMD)))
 	$(eval NEXTTAG := $(shell $(NEXTTAG_CMD)))
 	$(eval MAJOR_RELEASE := $(shell echo $(NEXTTAG) | cut -d. -f1 ))
 	$(eval RELNOTES := $(wildcard docs/release-notes/$(NEXTTAG).md))
 
 .PHONY: nexttag release
 
+LAST_RELEASE_CMD := gh release view --json tagName --jq .tagName 2>/dev/null
 define NEXTTAG_CMD
 {
   { git tag --list --merged HEAD --sort=-v:refname; echo v0.0.0; }
