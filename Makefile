@@ -25,10 +25,14 @@ release: nexttag ## Tag and create GitHub release
 	git push origin $(NEXTTAG)
 	git branch -f $(MAJOR_RELEASE)
 	git push origin $(MAJOR_RELEASE)
+	{ $(if $(RELNOTES),cat $(RELNOTES);) \
+	  echo "## Changelog"; git log --pretty="format:* %h %s" master..$(NEXTTAG); } | \
+	gh release create $(NEXTTAG) --title $(NEXTTAG) --notes-file -
 
 nexttag:
 	$(eval NEXTTAG := $(shell $(NEXTTAG_CMD)))
 	$(eval MAJOR_RELEASE := $(shell echo $(NEXTTAG) | cut -d. -f1 ))
+	$(eval RELNOTES := $(wildcard docs/release-notes/$(NEXTTAG).md))
 
 .PHONY: nexttag release
 
