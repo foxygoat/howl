@@ -9,7 +9,7 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - run: ./bin/hermit env -r >> $GITHUB_ENV
       - run: make
 
@@ -18,8 +18,9 @@ jobs:
     needs: [ci]
     if: github.event_name == 'push' # only run on push to master
     steps:
-      - uses: actions/checkout@v2
-      - run: git fetch --prune --unshallow --tags
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - run: ./bin/hermit env -r >> $GITHUB_ENV
       - run: make release
         env:
