@@ -16,7 +16,7 @@ SLACK_HOOK_URL="https://hooks.slack.com/services/${SLACK_TOKEN}"
 
 if [[ -z "${GITHUB_REPOSITORY-}" ]]; then
     REPO_URL=$(git remote get-url origin)
-    GITHUB_REPOSITORY="${REPO_URL#${GITHUB_SERVER_URL}/}"
+    GITHUB_REPOSITORY="${REPO_URL#"${GITHUB_SERVER_URL}"/}"
 else
     REPO_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
 fi
