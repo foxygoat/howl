@@ -9,9 +9,11 @@ all: check  ## Lint and check format of shell scripts
 .PHONY: all
 
 # --- Lint  ---------------------------------------------------------------------
+SH_FILES := howl
+
 check:  ## Lint and check format of shell scripts
-	shellcheck *.sh
-	shfmt -i 4 -d *.sh
+	shellcheck $(SH_FILES)
+	shfmt -i 4 -d $(SH_FILES)
 
 format:  ## Format shell scripts
 	shfmt -i 4 -w *.sh
