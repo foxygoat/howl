@@ -15,17 +15,17 @@ SLACK_HOOK_URL="https://hooks.slack.com/services/${SLACK_TOKEN}"
 : "${PICTURE_BASE_URL:=https://github.com/foxygoat/howl/raw/master}"
 
 if [[ -z "${GITHUB_REPOSITORY-}" ]]; then
-    REPO_URL=$(git remote get-url origin)
-    GITHUB_REPOSITORY="${REPO_URL#"${GITHUB_SERVER_URL}"/}"
+    repo_url=$(git remote get-url origin)
+    GITHUB_REPOSITORY="${repo_url#"${GITHUB_SERVER_URL}"/}"
 else
-    REPO_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
+    repo_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
 fi
-REPO=${GITHUB_REPOSITORY#*/}
+repo=${GITHUB_REPOSITORY#*/}
 
 : "${BUILD_URL:=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions${GITHUB_RUN_ID:+/runs/${GITHUB_RUN_ID}}}"
 : "${GITHUB_REF:=$(git symbolic-ref HEAD)}"
-BRANCH=${GITHUB_REF#refs/heads/}
-BRANCH_URL="${REPO_URL}/tree/${BRANCH}"
+branch=${GITHUB_REF#refs/heads/}
+branch_url="${repo_url}/tree/${branch}"
 
 # prop extracts property from JSON object.
 # prop '{"name": "Tricia", "age": 42}' age
@@ -34,31 +34,31 @@ prop() {
     jq -r ".$2" <<<"$1"
 }
 
-CURL_HEADERS=(-H "Accept: application/vnd.github.groot-preview+json")
+curl_headers=(-H "Accept: application/vnd.github.groot-preview+json")
 if [[ -n "${GITHUB_TOKEN-}" ]]; then
-    CURL_HEADERS+=(-H "Authorization: token ${GITHUB_TOKEN}")
+    curl_headers+=(-H "Authorization: token ${GITHUB_TOKEN}")
 fi
 
-COMMIT_URL="${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}"
-pr=$(curl -fsSL "${CURL_HEADERS[@]}" "${COMMIT_URL}/pulls" |
+commit_url="${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}"
+pr=$(curl -fsSL "${curl_headers[@]}" "${commit_url}/pulls" |
     jq '.[0] | {url: .html_url, number, title, author: .user.login}' || echo '{}')
 if [[ $(prop "${pr}" number) != null ]]; then
-    PR="PR #$(prop "${pr}" number)"
-    PR_URL=$(prop "${pr}" url)
-    PR_TITLE=$(prop "${pr}" title)
-    PR_AUTHOR=$(prop "${pr}" author)
+    pr="PR #$(prop "${pr}" number)"
+    pr_url=$(prop "${pr}" url)
+    pr_title=$(prop "${pr}" title)
+    pr_author=$(prop "${pr}" author)
 else
-    commit=$(curl -fsSL "${CURL_HEADERS[@]}" "${COMMIT_URL}" |
+    commit=$(curl -fsSL "${curl_headers[@]}" "${commit_url}" |
         jq '{url: .html_url, message: .commit.message, author: .author.login}' || echo '{}')
-    PR="Commit \`${GITHUB_SHA::7}\`"
+    pr="Commit \`${GITHUB_SHA::7}\`"
     if [[ $(prop "${commit}" url) != null ]]; then
-        PR_URL=$(prop "${commit}" url)
-        PR_TITLE=$(prop "${commit}" message | head -n 1)
-        PR_AUTHOR=$(prop "${commit}" author)
+        pr_url=$(prop "${commit}" url)
+        pr_title=$(prop "${commit}" message | head -n 1)
+        pr_author=$(prop "${commit}" author)
     else
-        PR_URL="${REPO_URL}"
-        PR_TITLE=$(git show -s --pretty=format:%s)
-        PR_AUTHOR=$(git show -s --pretty=format:%an)
+        pr_url="${repo_url}"
+        pr_title=$(git show -s --pretty=format:%s)
+        pr_author=$(git show -s --pretty=format:%an)
     fi
 fi
 
@@ -73,16 +73,16 @@ curl -fsSL -d @- "${SLACK_HOOK_URL}" <<EOF
  ${SLACK_TEXT}
  "attachments": [
       {
-          "fallback": "Build failure on ${BRANCH}",
+          "fallback": "Build failure on ${branch}",
           "color": "danger",
           "fields": [
             {
                 "value": "\
-*<${BUILD_URL}|Build Failure>* on \`<${BRANCH_URL}|${REPO}:${BRANCH}>\`\n\
-<${PR_URL}|${PR}> - ${PR_TITLE} \`@${PR_AUTHOR}\`"
+*<${BUILD_URL}|Build Failure>* on \`<${branch_url}|${repo}:${branch}>\`\n\
+<${pr_url}|${pr}> - ${pr_title} \`@${pr_author}\`"
             }
           ],
-          "footer": "<${REPO_URL}|${REPO}>",
+          "footer": "<${repo_url}|${repo}>",
           "footer_icon": "${PICTURE_BASE_URL}/footer.png"
       }
   ]
