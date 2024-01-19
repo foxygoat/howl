@@ -84,10 +84,10 @@ jobs:
     if: always() && contains(join(needs.*.result, ','), 'failure')
     steps:
       - uses: foxygoat/howl@v2
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_CHANNEL: C0000000000 # optional; channel ID
-          SLACK_TEXT: <!here> # optional; text or @-mention
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          DISCORD_TEXT: @here # optional; text or @-mention
+        with:
+          slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          slack-channel: C0000000000 # optional; channel ID
+          slack-text: <!here> # optional; text or @-mention
+          discord-webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          discord-text: @here # optional; text or @-mention
 ```

@@ -34,6 +34,6 @@ jobs:
     if: always() && contains(join(needs.*.result, ','), 'failure')
     steps:
       - uses: foxygoat/howl@v2
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_TEXT: <!here>
+        with:
+          slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          slack-text: <!here>

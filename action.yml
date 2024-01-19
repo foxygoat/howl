@@ -1,5 +1,16 @@
 name: 'Howl'
 description: 'Send slack message on failed build'
+inputs:
+  slack-webhook-url:
+    description: 'Slack Webhook URL, e.g. https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX'
+  slack-text:
+    description: 'Prepend text to Slack message, e.g.: <!here>'
+  slack-channel:
+    description: 'Channel to send Slack message to, e.g.: C0000000000'
+  discord-webhook-url:
+    description: 'Discord Webhook URL, e.g. https://discord.com/api/webhooks/1000000000000000000/XXXXXXXX-xxxxxxxxxxxxxxxxx'
+  discord-text:
+    description: 'Prepend text to Discord message, e.g.: @here'
 runs:
   using: 'composite'
   steps:

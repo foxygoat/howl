@@ -3,6 +3,21 @@
 set -euo pipefail
 trap 'echo failed: line $LINENO: $BASH_COMMAND' ERR
 
+# GitHub actions inputs starting with `INPUT_` take precedence over
+# un-prefixed environment variables. GitHub actions inputs are usually
+# written with kebab case which cannot be used in sh/bash so we're replacing
+# `-` with `_`.
+input() {
+    upper="${1^^}"
+    printenv "INPUT_${upper}" || printenv "${upper//-/_}" || echo
+}
+
+SLACK_WEBHOOK_URL=$(input slack-webhook-url)
+SLACK_TEXT=$(input slack-text)
+SLACK_CHANNEL=$(input slack-channel)
+DISCORD_WEBHOOK_URL=$(input discord-webhook-url)
+DISCORD_TEXT=$(input discord-text)
+
 if [[ -z "${SLACK_WEBHOOK_URL-}" && -z "${DISCORD_WEBHOOK_URL-}" ]]; then
     echo "At least one of SLACK_WEBHOOK_URL or DISCORD_WEBHOOK_URL must be set"
     exit 1
