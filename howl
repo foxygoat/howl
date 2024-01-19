@@ -3,11 +3,10 @@
 set -euo pipefail
 trap 'echo failed: line $LINENO: $BASH_COMMAND' ERR
 
-if [[ -z "${SLACK_TOKEN-}" ]]; then
-    echo "SLACK_TOKEN not set"
+if [[ -z "${SLACK_WEBHOOK_URL-}" ]]; then
+    echo "SLACK_WEBHOOK_URL not set"
     exit 1
 fi
-SLACK_HOOK_URL="https://hooks.slack.com/services/${SLACK_TOKEN}"
 
 : "${GITHUB_SERVER_URL:=https://github.com}"
 : "${GITHUB_API_URL:=https://api.github.com}"
@@ -62,13 +61,13 @@ else
     fi
 fi
 
-CHANNEL="${CHANNEL:+"\"channel\": \"${CHANNEL}\","}"
+channel="${SLACK_CHANNEL:+"\"channel\": \"${SLACK_CHANNEL}\","}"
 SLACK_TEXT="${SLACK_TEXT:+"\"text\": \"${SLACK_TEXT}\","}"
 
-curl -fsSL -d @- "${SLACK_HOOK_URL}" <<EOF
+curl -fsSL -d @- "${SLACK_WEBHOOK_URL}" <<EOF
 {
  "icon_url": "${PICTURE_BASE_URL}/icon.png",
- ${CHANNEL}
+ ${channel}
  "username": "${SLACK_USERNAME:-Howl}",
  ${SLACK_TEXT}
  "attachments": [

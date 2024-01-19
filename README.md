@@ -1,81 +1,73 @@
+<a href="https://commons.wikimedia.org/wiki/File:DSC09108_-_Guyanan_Red_Howler_Monkey_(36384553204).jpg" title="Howler Monkey on Wikipedia">
+<img align="right" width="100" height="150" src="howler.jpeg" alt="Howler monkey">
+</a>
+
 # Howl
 
 Because somebody should yell at you when your `master` build breaks.
 
-Howl is a GitHub Action. It writes a custom Slack message with an
-optional `@here` or `@project-owners` to your preferred Slack channel.
+`howl` is a tool that sends messages to Slack when your default
+branch build fails, typically on `main` or `master`. It is designed to be
+triggered on your CI (continuous integration) system when a failure occurs on
+your default branch. You can use it as a GitHub Action or as a standalone
+program, which can be installed with [Hermit].
 
-<div style="text-align:center;width:100%">
-  <img src="howler.jpeg" alt="Howler Monkey"/>
-  <br/>
-  <sub>Howler Monkey -
-    <a href="https://commons.wikimedia.org/wiki/File:DSC09108_-_Guyanan_Red_Howler_Monkey_(36384553204).jpg">
-      Wikimedia, CC BY-SA 2.0
-    </a>
-  </sub>
-</div>
+[Hermit]: https://cashapp.github.io/hermit
 
-## Set up Slack token
+## Slack setup
 
-Set up a repository or organisation secrets with your [Incoming Slack
-Webhook] token. Use, for instance, `SLACK_TOKEN`. The content should
-look similar to
+Set up a [GitHub secret] called `SLACK_WEBHOOK_URL` with your
+[Slack Webhook] URL, for example
 
-    T01A*******/B0259*****/GcXTiEux*******************
+    https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
 
-Taken from the Slack provided Incoming Webhook URL:
+[Slack Webhook]: https://api.slack.com/messaging/webhooks
+[GitHub secret]: https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions
 
-    https://hooks.slack.com/services/T01A*******/B0259*****/GcXTiEux*******************
+### Optional inputs
 
-[Incoming Slack Webhook]: https://slack.com/intl/en-au/help/articles/115005265063-Incoming-webhooks-for-Slack
+To use a channel other than the default channel set up in the Slack App bound
+to the webhook, set the `SLACK_CHANNEL` environment variable, for example
 
-## Use with GitHub Action Workflow
+    export SLACK_CHANNEL=C0000000000
+
+For a more customized message or @-mentions, set the `SLACK_TEXT` environment
+variable, for example
+
+    export SLACK_TEXT="<!here> 🚒"
+
+## Local Testing
+
+You can test the integration locally with
+
+    export SLACK_WEBHOOK_URL=https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
+    howl
+
+## GitHub Action usage
+
+Use the `foxygoat/howl@v2` in you GitHub Actions Workflow that runs on the
+default branch, for example:
 
 ```yaml
 name: ci
 on:
   push:
-    branches: [master]
-  pull_request:
+    branches: [main]
 
 jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-        run: make
-  howl-on-failure:
+      - uses: actions/checkout@v4
+        run: make ci
+  howl-on-fail:
     runs-on: ubuntu-latest
     needs: [ci]
-    if: always && github.event_name == 'push' && needs.ci.result == 'failure'
+    if: always() && contains(join(needs.*.result, ','), 'failure')
     steps:
-      - uses: foxygoat/howl@v1
+      - uses: foxygoat/howl@v2
         env:
-          SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
-          SLACK_TEXT: <!here> # optional; text or @-mention project owners by slack member ID, e.g. <@U0LAN0Z89>
-          #CHANNEL: D01J5K3RLQJ       # optional; use if different from slack webhook setup, take from channel URL
-```
-
-## Use with external CI system
-
-```yaml
-name: slack-notify
-on:
-  # choose one of status, check_run, check_suite
-  status:
-  check_run:
-    types: [completed]
-  check_suite:
-    types: [completed]
-jobs:
-  slack-notify:
-    runs-on: ubuntu-latest
-    steps:
-      - if: ${{ contains(github.event.branches.*.name, 'master') && (github.event.state == 'failure' || github.event.state == 'error')}}
-        uses: foxygoat/howl@v1
-        env:
-          SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
-          BUILD_URL: ${{ github.event.target_url }}
-          #SLACK_TEXT: <!here>   # optional; text or @-mention project owners by slack member ID, e.g. <@U0LAN0Z89>
-          #CHANNEL: D01J5K3RLQJ       # optional; use if different from slack webhook setup, take from channel URL
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_CHANNEL: C0000000000 # optional; channel ID
+          SLACK_TEXT: <!here> # optional; text or @-mention
 ```
