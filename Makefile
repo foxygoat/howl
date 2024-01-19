@@ -31,7 +31,7 @@ release: nexttag ## Tag and create GitHub release
 	  $(if $(RELNOTES),cat $(RELNOTES);) \
 	  echo "## Changelog"; \
 	  git log --pretty="tformat:* %h %s" --no-merges --reverse $(or $(LAST_RELEASE),@^).. ; \
-	} | gh release create $(NEXTTAG) --title $(NEXTTAG) --notes-file -
+	} | gh release create $(NEXTTAG) --title $(NEXTTAG) --notes-file - howl
 
 nexttag:
 	$(eval LAST_RELEASE := $(shell $(LAST_RELEASE_CMD)))
