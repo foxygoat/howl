@@ -42,7 +42,7 @@ commit_url="${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}"
 pr=$(curl -fsSL "${curl_headers[@]}" "${commit_url}/pulls" |
     jq '.[0] | {url: .html_url, number, title, author: .user.login}' || echo '{}')
 if [[ $(prop "${pr}" number) != null ]]; then
-    pr="PR #$(prop "${pr}" number)"
+    pr="${GITHUB_REPOSITORY}#$(prop "${pr}" number)"
     pr_url=$(prop "${pr}" url)
     pr_title=$(prop "${pr}" title)
     pr_author=$(prop "${pr}" author)
@@ -66,24 +66,29 @@ SLACK_TEXT="${SLACK_TEXT:+"\"text\": \"${SLACK_TEXT}\","}"
 
 curl -fsSL -d @- "${SLACK_WEBHOOK_URL}" <<EOF
 {
- "icon_url": "${PICTURE_BASE_URL}/icon.png",
- ${channel}
- "username": "${SLACK_USERNAME:-Howl}",
- ${SLACK_TEXT}
- "attachments": [
-      {
-          "fallback": "Build failure on ${branch}",
-          "color": "danger",
-          "fields": [
-            {
-                "value": "\
-*<${BUILD_URL}|Build Failure>* on \`<${branch_url}|${repo}:${branch}>\`\n\
-<${pr_url}|${pr}> - ${pr_title} \`@${pr_author}\`"
-            }
-          ],
-          "footer": "<${repo_url}|${repo}>",
-          "footer_icon": "${PICTURE_BASE_URL}/footer.png"
-      }
+  "icon_url": "${PICTURE_BASE_URL}/icon.png",
+  ${channel}
+  "username": "${SLACK_USERNAME:-Howl}",
+  ${SLACK_TEXT}
+  "attachments": [
+    {
+      "title": "🚨 Build Failure 🚨",
+      "title_link": "${BUILD_URL}",
+      "color": "danger",
+      "fallback": "Build failure on ${branch}",
+      "fields": [
+        {
+          "title": "PR",
+          "value": "<${pr_url}|${pr}>\n${pr_title} \`@${pr_author}\`"
+        },
+        {
+          "title": "Branch",
+          "value": "<${branch_url}|${repo}:${branch}>"
+        }
+      ],
+      "footer": "<${repo_url}|${GITHUB_REPOSITORY}>",
+      "footer_icon": "${PICTURE_BASE_URL}/footer.png"
+    }
   ]
 }
 EOF
