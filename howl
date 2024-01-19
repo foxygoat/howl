@@ -3,8 +3,8 @@
 set -euo pipefail
 trap 'echo failed: line $LINENO: $BASH_COMMAND' ERR
 
-if [[ -z "${SLACK_WEBHOOK_URL-}" ]]; then
-    echo "SLACK_WEBHOOK_URL not set"
+if [[ -z "${SLACK_WEBHOOK_URL-}" && -z "${DISCORD_WEBHOOK_URL-}" ]]; then
+    echo "At least one of SLACK_WEBHOOK_URL or DISCORD_WEBHOOK_URL must be set"
     exit 1
 fi
 
@@ -61,10 +61,11 @@ else
     fi
 fi
 
-channel="${SLACK_CHANNEL:+"\"channel\": \"${SLACK_CHANNEL}\","}"
-SLACK_TEXT="${SLACK_TEXT:+"\"text\": \"${SLACK_TEXT}\","}"
+if [[ -n "${SLACK_WEBHOOK_URL-}" ]]; then
+    channel="${SLACK_CHANNEL:+"\"channel\": \"${SLACK_CHANNEL}\","}"
+    SLACK_TEXT="${SLACK_TEXT:+"\"text\": \"${SLACK_TEXT}\","}"
 
-curl -fsSL -d @- "${SLACK_WEBHOOK_URL}" <<EOF
+    curl -fsSL -d @- "${SLACK_WEBHOOK_URL}" <<EOF
 {
   "icon_url": "${PICTURE_BASE_URL}/icon.png",
   ${channel}
@@ -92,3 +93,35 @@ curl -fsSL -d @- "${SLACK_WEBHOOK_URL}" <<EOF
   ]
 }
 EOF
+fi
+
+if [[ -n "${DISCORD_WEBHOOK_URL-}" ]]; then
+    curl -fsSL -H "Content-Type:application/json" -d @- "${DISCORD_WEBHOOK_URL}" <<EOF
+{
+  "username": "Howl",
+  "avatar_url": "${PICTURE_BASE_URL}/icon.png",
+  "content": "${DISCORD_TEXT:-}",
+  "embeds": [
+    {
+      "title": "🚨 Build Failure 🚨",
+      "url": "${BUILD_URL}",
+      "color": 16711680,
+      "fields": [
+        {
+            "name": "PR",
+            "value": "[${pr}](<${pr_url}>)\n${pr_title} \`@${pr_author}\`"
+        },
+        {
+            "name": "Branch",
+            "value": "[${repo}:${branch}](${branch_url})"
+        }
+      ],
+      "footer": {
+        "text": "${GITHUB_REPOSITORY}",
+        "icon_url": "${PICTURE_BASE_URL}/footer.png"
+      }
+    }
+  ]
+ }
+EOF
+fi
