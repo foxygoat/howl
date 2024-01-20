@@ -57,14 +57,14 @@ commit_url="${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}"
 pr=$(curl -fsSL "${curl_headers[@]}" "${commit_url}/pulls" |
     jq '.[0] | {url: .html_url, number, title, author: .user.login}' || echo '{}')
 if [[ $(prop "${pr}" number) != null ]]; then
-    pr="${GITHUB_REPOSITORY}#$(prop "${pr}" number)"
     pr_url=$(prop "${pr}" url)
     pr_title=$(prop "${pr}" title)
     pr_author=$(prop "${pr}" author)
+    pr_number="${GITHUB_REPOSITORY}#$(prop "${pr}" number)"
 else
     commit=$(curl -fsSL "${curl_headers[@]}" "${commit_url}" |
         jq '{url: .html_url, message: .commit.message, author: .author.login}' || echo '{}')
-    pr="Commit \`${GITHUB_SHA::7}\`"
+    pr_number="Commit \`${GITHUB_SHA::7}\`"
     if [[ $(prop "${commit}" url) != null ]]; then
         pr_url=$(prop "${commit}" url)
         pr_title=$(prop "${commit}" message | head -n 1)
@@ -95,7 +95,7 @@ if [[ -n "${SLACK_WEBHOOK_URL-}" ]]; then
       "fields": [
         {
           "title": "PR",
-          "value": "<${pr_url}|${pr}>\n${pr_title} \`@${pr_author}\`"
+          "value": "<${pr_url}|${pr_number}>\n${pr_title} \`@${pr_author}\`"
         },
         {
           "title": "Branch",
@@ -124,7 +124,7 @@ if [[ -n "${DISCORD_WEBHOOK_URL-}" ]]; then
       "fields": [
         {
             "name": "PR",
-            "value": "[${pr}](<${pr_url}>)\n${pr_title} \`@${pr_author}\`"
+            "value": "[${pr_number}](<${pr_url}>)\n${pr_title} \`@${pr_author}\`"
         },
         {
             "name": "Branch",
