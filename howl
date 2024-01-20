@@ -1,0 +1,142 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+trap 'echo failed: line $LINENO: $BASH_COMMAND' ERR
+
+# GitHub actions inputs starting with `INPUT_` take precedence over
+# un-prefixed environment variables. GitHub actions inputs are usually
+# written with kebab case which cannot be used in sh/bash so we're replacing
+# `-` with `_`.
+input() {
+    upper="${1^^}"
+    printenv "INPUT_${upper}" || printenv "${upper//-/_}" || echo
+}
+
+SLACK_WEBHOOK_URL=$(input slack-webhook-url)
+SLACK_TEXT=$(input slack-text)
+SLACK_CHANNEL=$(input slack-channel)
+DISCORD_WEBHOOK_URL=$(input discord-webhook-url)
+DISCORD_TEXT=$(input discord-text)
+
+if [[ -z "${SLACK_WEBHOOK_URL-}" && -z "${DISCORD_WEBHOOK_URL-}" ]]; then
+    echo "At least one of SLACK_WEBHOOK_URL or DISCORD_WEBHOOK_URL must be set"
+    exit 1
+fi
+
+: "${GITHUB_SERVER_URL:=https://github.com}"
+: "${GITHUB_API_URL:=https://api.github.com}"
+: "${GITHUB_SHA:=$(git rev-parse HEAD)}"
+: "${PICTURE_BASE_URL:=https://github.com/foxygoat/howl/raw/master}"
+
+if [[ -z "${GITHUB_REPOSITORY-}" ]]; then
+    repo_url=$(git remote get-url origin)
+    GITHUB_REPOSITORY="${repo_url#"${GITHUB_SERVER_URL}"/}"
+else
+    repo_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}"
+fi
+repo=${GITHUB_REPOSITORY#*/}
+
+: "${BUILD_URL:=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions${GITHUB_RUN_ID:+/runs/${GITHUB_RUN_ID}}}"
+: "${GITHUB_REF:=$(git symbolic-ref HEAD)}"
+branch=${GITHUB_REF#refs/heads/}
+branch_url="${repo_url}/tree/${branch}"
+
+# prop extracts property from JSON object.
+# prop '{"name": "Tricia", "age": 42}' age
+# 42
+prop() {
+    jq -r ".$2" <<<"$1"
+}
+
+curl_headers=(-H "Accept: application/vnd.github.groot-preview+json")
+if [[ -n "${GITHUB_TOKEN-}" ]]; then
+    curl_headers+=(-H "Authorization: token ${GITHUB_TOKEN}")
+fi
+
+commit_url="${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}"
+pr=$(curl -fsSL "${curl_headers[@]}" "${commit_url}/pulls" |
+    jq '.[0] | {url: .html_url, number, title, author: .user.login}' || echo '{}')
+if [[ $(prop "${pr}" number) != null ]]; then
+    pr="${GITHUB_REPOSITORY}#$(prop "${pr}" number)"
+    pr_url=$(prop "${pr}" url)
+    pr_title=$(prop "${pr}" title)
+    pr_author=$(prop "${pr}" author)
+else
+    commit=$(curl -fsSL "${curl_headers[@]}" "${commit_url}" |
+        jq '{url: .html_url, message: .commit.message, author: .author.login}' || echo '{}')
+    pr="Commit \`${GITHUB_SHA::7}\`"
+    if [[ $(prop "${commit}" url) != null ]]; then
+        pr_url=$(prop "${commit}" url)
+        pr_title=$(prop "${commit}" message | head -n 1)
+        pr_author=$(prop "${commit}" author)
+    else
+        pr_url="${repo_url}"
+        pr_title=$(git show -s --pretty=format:%s)
+        pr_author=$(git show -s --pretty=format:%an)
+    fi
+fi
+
+if [[ -n "${SLACK_WEBHOOK_URL-}" ]]; then
+    channel="${SLACK_CHANNEL:+"\"channel\": \"${SLACK_CHANNEL}\","}"
+    SLACK_TEXT="${SLACK_TEXT:+"\"text\": \"${SLACK_TEXT}\","}"
+
+    curl -fsSL -d @- "${SLACK_WEBHOOK_URL}" <<EOF
+{
+  "icon_url": "${PICTURE_BASE_URL}/icon.png",
+  ${channel}
+  "username": "${SLACK_USERNAME:-Howl}",
+  ${SLACK_TEXT}
+  "attachments": [
+    {
+      "title": "🚨 Build Failure 🚨",
+      "title_link": "${BUILD_URL}",
+      "color": "danger",
+      "fallback": "Build failure on ${branch}",
+      "fields": [
+        {
+          "title": "PR",
+          "value": "<${pr_url}|${pr}>\n${pr_title} \`@${pr_author}\`"
+        },
+        {
+          "title": "Branch",
+          "value": "<${branch_url}|${repo}:${branch}>"
+        }
+      ],
+      "footer": "<${repo_url}|${GITHUB_REPOSITORY}>",
+      "footer_icon": "${PICTURE_BASE_URL}/footer.png"
+    }
+  ]
+}
+EOF
+fi
+
+if [[ -n "${DISCORD_WEBHOOK_URL-}" ]]; then
+    curl -fsSL -H "Content-Type:application/json" -d @- "${DISCORD_WEBHOOK_URL}" <<EOF
+{
+  "username": "Howl",
+  "avatar_url": "${PICTURE_BASE_URL}/icon.png",
+  "content": "${DISCORD_TEXT:-}",
+  "embeds": [
+    {
+      "title": "🚨 Build Failure 🚨",
+      "url": "${BUILD_URL}",
+      "color": 16711680,
+      "fields": [
+        {
+            "name": "PR",
+            "value": "[${pr}](<${pr_url}>)\n${pr_title} \`@${pr_author}\`"
+        },
+        {
+            "name": "Branch",
+            "value": "[${repo}:${branch}](${branch_url})"
+        }
+      ],
+      "footer": {
+        "text": "${GITHUB_REPOSITORY}",
+        "icon_url": "${PICTURE_BASE_URL}/footer.png"
+      }
+    }
+  ]
+ }
+EOF
+fi

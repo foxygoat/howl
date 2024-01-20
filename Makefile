@@ -9,9 +9,11 @@ all: check  ## Lint and check format of shell scripts
 .PHONY: all
 
 # --- Lint  ---------------------------------------------------------------------
+SH_FILES := howl
+
 check:  ## Lint and check format of shell scripts
-	shellcheck *.sh
-	shfmt -i 4 -d *.sh
+	shellcheck $(SH_FILES)
+	shfmt -i 4 -d $(SH_FILES)
 
 format:  ## Format shell scripts
 	shfmt -i 4 -w *.sh
@@ -29,7 +31,7 @@ release: nexttag ## Tag and create GitHub release
 	  $(if $(RELNOTES),cat $(RELNOTES);) \
 	  echo "## Changelog"; \
 	  git log --pretty="tformat:* %h %s" --no-merges --reverse $(or $(LAST_RELEASE),@^).. ; \
-	} | gh release create $(NEXTTAG) --title $(NEXTTAG) --notes-file -
+	} | gh release create $(NEXTTAG) --title $(NEXTTAG) --notes-file - howl
 
 nexttag:
 	$(eval LAST_RELEASE := $(shell $(LAST_RELEASE_CMD)))
