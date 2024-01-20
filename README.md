@@ -89,5 +89,5 @@ jobs:
           slack-channel: C0000000000 # optional; channel ID
           slack-text: <!here> # optional; text or @-mention
           discord-webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          discord-text: @here # optional; text or @-mention
+          discord-text: '@here' # optional; text or @-mention
 ```
